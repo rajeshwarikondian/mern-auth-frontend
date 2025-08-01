@@ -88,7 +88,7 @@ const ResetPassword = () => {
         backendUrl + "/api/auth/reset-password",
         { email, otp, newPassword }
       );
-         if (data.success) {
+      if (data.success) {
         toast.success(data.message);
         navigate("/login");
       } else {
