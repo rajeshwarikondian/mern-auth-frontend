@@ -1,48 +1,43 @@
 import axios from "axios";
-import { useEffect } from "react";
-import { createContext, useState } from "react";
+
+import { useEffect,createContext, useState } from "react";
 import { toast } from "react-toastify";
 
 export const AppContext = createContext();
 
 export const AppContextProvider = (props) => {
-    
-  axios.defaults.withCredentials = true;
-
+  // axios.defaults.withCredentials = true;
   const backendUrl = import.meta.env.VITE_Backend_URL;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userData, setUserData] = useState(false);
 
-  const getAuthState = async () => {
-    try {
-      const {data} = await axios.get(backendUrl + "/api/auth/is-auth", {
-        withCredentials: true,
-      })
-      if(data.success){
-        setIsLoggedIn(true)
-        getUserData(data.userId);
-      //  if (data.userId)  getUserData(userId)
-
-      }
-    } catch (error) {
-      toast.error(error.message)
-    }
-  }
   
-  const  getUserData = async (userId) => {
+ 
+   // ✅ Fetch user data using token from localStorage
+  const getUserData = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
     try {
       const { data } = await axios.get(backendUrl + "/api/user/data", {
-        withCredentials:true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-        });
-      data.success ? setUserData(data.userData) : toast.error(data.message);
+      if (data.success) {
+        setUserData(data.userData);
+        setIsLoggedIn(true);
+      } else {
+        toast.error(data.message);
+      }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || "User fetch failed");
     }
   };
 
   useEffect(() => {
-    getAuthState();
+    getUserData();
   },[]);
 
   const value = {

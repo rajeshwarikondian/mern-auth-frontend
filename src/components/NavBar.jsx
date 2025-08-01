@@ -19,7 +19,7 @@ const NavBar = () => {
       );
       if (data.success) {
         navigate("/email-verify");
-        toast.success("data.message");
+        toast.success(data.message);
       } else {
         toast.error(data.message);
       }
@@ -33,7 +33,7 @@ const NavBar = () => {
       axios.defaults.withCredentials = true;
       const { data } = await axios.post(backendUrl + "/api/auth/logout");
       data.success && setIsLoggedIn(false);
-      data.success && setUserData(false);
+      data.success && setUserData(null);//false 
       navigate("/");
     } catch (error) {
       toast.error(error.message);

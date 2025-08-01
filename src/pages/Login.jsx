@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { AppContext } from "../context/AppContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useEffect } from "react";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,46 +16,53 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+  }, []);
+
   const onSubmitHandler = async (e) => {
+    e.preventDefault();
     try {
-      e.preventDefault();
-
-      axios.defaults.withCredentials = true;
-
+      let res;
       if (state === "Sign Up") {
-
-        const { data } = await axios.post(backendUrl + "/api/auth/register", {
+        res = await axios.post(backendUrl + "/api/auth/register", {
           name,
           email,
           password,
         });
-
-        if (data.success) {
-          setIsLoggedIn(true);
-          getUserData(data["userId"])
-          navigate("/");
-        } else {
-    
-          toast.error(data.message);
-        }
       } else {
-        const { data } = await axios.post(backendUrl + "/api/auth/login", {
+        res = await axios.post(backendUrl + "/api/auth/login", {
           email,
           password,
         });
+      }
 
-        if (data.success) {
-          console.log("Login Success", data)
-          setIsLoggedIn(true);
-          getUserData(data["userId"])
-          navigate("/");
-        } else {
-            console.log("hello else part login")
-          toast.error(data.message);
-        }
+      const data = res.data;
+
+      if (data.success) {
+        console.log("Auth Success:", data);
+
+        // ✅ Save token in localStorage
+        localStorage.setItem("token", data.token);
+
+        // ✅ Set axios auth header for future requests
+        axios.defaults.headers.common["Authorization"] = `Bearer ${data.token}`;
+
+        setIsLoggedIn(true);
+        getUserData(); // No need to pass userId
+        navigate("/");
+
+        setEmail("");
+        setPassword("");
+        setName("");
+      } else {
+        toast.error(data.message || "Something went wrong");
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
@@ -110,7 +118,6 @@ const Login = () => {
               required
               name="email"
               autoComplete="email"
-              
             />
           </div>
           <div className="mb-4 flex items-center gap-3 w-full px-5 py-2.5 rounded-full bg-[#333A5C]">
@@ -122,7 +129,6 @@ const Login = () => {
               type="password"
               placeholder="Password"
               required
-            
             />
           </div>
 

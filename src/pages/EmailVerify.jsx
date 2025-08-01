@@ -9,11 +9,9 @@ import { useNavigate } from "react-router-dom";
 
 const EmailVerify = () => {
 
-  axios.defaults.withCredentials = true
-  const navigate = useNavigate()
-
+  // axios.defaults.withCredentials = true
+const navigate = useNavigate()
 const {backendUrl, isLoggedIn, userData ,getUserData} = useContext(AppContext)
-
 const inputRefs = React.useRef([]);
 
 const handleInput = (e, index)=>{

@@ -6,15 +6,13 @@ import axios from "axios";
 import { toast } from "react-toastify";
 
 const ResetPassword = () => {
-
-const {backendUrl} = useContext(AppContext)
-axios.defaults.withCredentials = true;
-
+  const { backendUrl } = useContext(AppContext);
+  // axios.defaults.withCredentials = true;
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
-  const [isEmailSent, setIsEmailSent] = useState("");
-  const [otp, setOtp] = useState(0);
+  const [isEmailSent, setIsEmailSent] = useState(false); //""
+  const [otp, setOtp] = useState(""); //0
   const [isOtpSubmitted, setIsOtpSubmitted] = useState(false);
 
   const inputRefs = React.useRef([]);
@@ -37,7 +35,7 @@ axios.defaults.withCredentials = true;
 
   const handlePaste = (e) => {
     const paste = e.clipboardData.getData("text");
-    const pasteArray = paste.split("");
+    const pasteArray = paste.split("").slice(0, 6);
     pasteArray.forEach((char, index) => {
       if (inputRefs.current[index]) {
         inputRefs.current[index].value = char;
@@ -45,36 +43,62 @@ axios.defaults.withCredentials = true;
     });
   };
 
-const onSubmitEamil = async (e)=>{
-e.preventDefault()
-try {
-  const {data} = await axios.post(backendUrl + "/api/auth/send-reset-otp",{email})
-  data.success ? toast.success(data.message) : toast.error(data.message)
-  data.success && setIsEmailSent(true)
-} catch (error) {
-  toast.error(error.message)
-}
-}
+  const onSubmitEamil = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await axios.post(
+        backendUrl + "/api/auth/send-reset-otp",
+        { email }
+      );
+      // data.success ? toast.success(data.message) : toast.error(data.message);
+      // data.success && setIsEmailSent(true);
+      // setTimeout(() => inputRefs.current[0]?.focus(), 100); // Autofocus OTP
+      if (data.success) {
+        toast.success(data.message);
+        setIsEmailSent(true);
+        setTimeout(() => inputRefs.current[0]?.focus(), 100); // Auto-focus first OTP box
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
 
-const onSubmitOTP = async (e)=>{
-  e.preventDefault()
-  const otpArray = inputRefs.current.map(e=> e.value)
-  setOtp(otpArray.join(""))
-  setIsOtpSubmitted(true)
+  const onSubmitOTP = async (e) => {
+    e.preventDefault();
+    // const otpArray = inputRefs.current.map(e=> e.value.repalce)
+    // setOtp(otpArray.join(""))
+    const otpArray = inputRefs.current.map((e) => e.value.replace(/\D/g, ""));
+    const joinedOtp = otpArray.join("");
 
-}
+    if (joinedOtp.length !== 6) {
+      toast.error("Please enter a valid 6-digit OTP");
+      return;
+    }
 
-const onSubmitNewPassword = async (e)=>{
-  e.preventDefault()
-  try {
-    const {data} = await axios.post(backendUrl + '/api/auth/reset-password',
-       {email,otp,newPassword})
-       data.success ? toast.success(data.message) : toast.error(data.message)
-       data.success && navigate('/login')
-  } catch (error) {
-    toast.error(error.message)
-  }
-}
+    setOtp(joinedOtp);
+    setIsOtpSubmitted(true);
+  };
+
+  const onSubmitNewPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const { data } = await axios.post(
+        backendUrl + "/api/auth/reset-password",
+        { email, otp, newPassword }
+      );
+         if (data.success) {
+        toast.success(data.message);
+        navigate("/login");
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Password reset failed");
+    }
+  };
+
   return (
     <div
       className="flex items-center justify-center min-h-screen  
@@ -91,9 +115,10 @@ const onSubmitNewPassword = async (e)=>{
       {/* enter the email id */}
 
       {!isEmailSent && (
-
-        <form onSubmit={onSubmitEamil} 
-        className="bg-slate-800 p-8 rounded-lg shadow-lg w-96 text-sm">
+        <form
+          onSubmit={onSubmitEamil}
+          className="bg-slate-800 p-8 rounded-lg shadow-lg w-96 text-sm"
+        >
           <h1 className="text-white text-2xl font-semibold text-center mb-4">
             Reset Password
           </h1>
@@ -106,7 +131,7 @@ const onSubmitNewPassword = async (e)=>{
           >
             <img src={assets.mail_icon} alt="" className="w-3 h-3" />
             <input
-              type="email "
+              type="email"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -127,9 +152,10 @@ const onSubmitNewPassword = async (e)=>{
 
       {/* otp input form  //ading the OTP */}
       {!isOtpSubmitted && isEmailSent && (
-        <form 
-        onSubmit={onSubmitOTP}
-        className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm">
+        <form
+          onSubmit={onSubmitOTP}
+          className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
+        >
           <h1 className="text-white text-2xl font-semibold text-center mb-4">
             Reset password OTP
           </h1>
@@ -164,8 +190,10 @@ const onSubmitNewPassword = async (e)=>{
 
       {/* //enter new password */}
       {isOtpSubmitted && isEmailSent && (
-        <form onSubmit={onSubmitNewPassword}
-        className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm">
+        <form
+          onSubmit={onSubmitNewPassword}
+          className="bg-slate-900 p-8 rounded-lg shadow-lg w-96 text-sm"
+        >
           <h1 className="text-white text-2xl font-semibold text-center mb-4">
             New password
           </h1>
